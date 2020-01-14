@@ -13,10 +13,10 @@ training_id = [3, 4, 5, 6, 8, 10, 15, 16, 17, 20, 21, 22, 23, 25, 26, 27, 30, 32
 validating_id = [1, 7, 12, 13, 24, 29, 33, 34, 35, 37]
 testing_id = [2, 9, 11, 14, 18, 19, 28, 31, 41, 47]
 
-for sub_i in tqdm(testing_id):
+
+for sub_i in tqdm(testing_id): # change to training_id and validating_id when saving to train and val
     frame_path_sub = os.path.join(frame_path, 'Subject{:02}'.format(sub_i))
-    label_path_sub = os.path.join(label_path, 'subject{:02}'.forma
-    t(sub_i))
+    label_path_sub = os.path.join(label_path, 'subject{:02}'.format(sub_i))
     assert len([name for name in os.listdir(label_path_sub) if name != '.DS_Store']) == len([name for name in os.listdir(frame_path_sub)])
     for scene_i in range(1, len([name for name in os.listdir(frame_path_sub)])+1):
         rgb_path = os.path.join(frame_path_sub, 'Scene{:01}'.format(scene_i), 'Color')
@@ -47,5 +47,8 @@ for sub_i in tqdm(testing_id):
 annot_df = pd.DataFrame(annot_dict)
 
 save_dir = '/home/zhengwei/dataset/egogesture'
-save_file = os.path.join(save_dir, 'test.csv')
-annot_df.to_csv(save_file,index=False)
+# change here when using different train ids
+# save_file = os.path.join(save_dir, 'train.pkl')
+# save_file = os.path.join(save_dir, 'val.pkl')
+save_file = os.path.join(save_dir, 'test.pkl')
+annot_df.to_pickle(save_file)

@@ -26,90 +26,91 @@ import opts
 # args = opts.parse_opts()
 root_path = '/home/zhengwei/dataset/egogesture/FramesInMeadia'
 
-# load annotation files task by task
-def load_frame_task(csv_path, mode, n_frames_per_clip, 
-                    task, stride=1, reverse=False):
-    # mode: train, val, test
-    csv_file = os.path.join(root_path, '{}.csv'.format(mode))
-    annot_df = pd.read_csv(csv_file)
-    # get task index in dataframe
-    task_ind = []
-    for i in range(annot_df.shape[0]):
-        if eval(annot_df['rgb'][i])[0].split('/')[-4] == task:
-            task_ind.append(i)
-    annot_df_task = annot_df.iloc[task_ind]
-    rgb_samples = []
-    depth_samples = []
-    labels = []
-    for frame_i in range(annot_df_task.shape[0]):
-        rgb_list = eval(annot_df_task['rgb'].iloc[frame_i]) # convert string in dataframe to list
-        depth_list = eval(annot_df_task['depth'].iloc[frame_i])
-        if len(rgb_list) >= n_frames_per_clip:
-            # define how many samples for a video clip
-            clip_final_ind = int(
-                len(rgb_list) - n_frames_per_clip + 1 - stride)
-            clip_i = 0
-            while clip_i <= clip_final_ind:
-                rgb_samples.append(
-                    rgb_list[clip_i:(clip_i + n_frames_per_clip)])
-                depth_samples.append(
-                    depth_list[clip_i:(clip_i + n_frames_per_clip)])    
-                labels.append(annot_df['label'].iloc[frame_i])
-                # data augmentation by reversing the sequence of the video
-                if reverse:
-                    rgb_samples.append(
-                        rgb_list[::-1][clip_i:(clip_i + n_frames_per_clip)])
-                    depth_samples.append(
-                        depth_list[::-1][clip_i:(clip_i + n_frames_per_clip)])
-                    labels.append(annot_df['label'].iloc[frame_i])
-                clip_i += stride
-    return rgb_samples, depth_samples, labels
+# # load annotation files task by task
+# def load_frame_task(csv_path, mode, n_frames_per_clip, 
+#                     task, stride=1, reverse=False):
+#     # mode: train, val, test
+#     csv_file = os.path.join(root_path, '{}.csv'.format(mode))
+#     annot_df = pd.read_csv(csv_file)
+#     # get task index in dataframe
+#     task_ind = []
+#     for i in range(annot_df.shape[0]):
+#         if eval(annot_df['rgb'][i])[0].split('/')[-4] == task:
+#             task_ind.append(i)
+#     annot_df_task = annot_df.iloc[task_ind]
+#     rgb_samples = []
+#     depth_samples = []
+#     labels = []
+#     for frame_i in range(annot_df_task.shape[0]):
+#         rgb_list = eval(annot_df_task['rgb'].iloc[frame_i]) # convert string in dataframe to list
+#         depth_list = eval(annot_df_task['depth'].iloc[frame_i])
+#         if len(rgb_list) >= n_frames_per_clip:
+#             # define how many samples for a video clip
+#             clip_final_ind = int(
+#                 len(rgb_list) - n_frames_per_clip + 1 - stride)
+#             clip_i = 0
+#             while clip_i <= clip_final_ind:
+#                 rgb_samples.append(
+#                     rgb_list[clip_i:(clip_i + n_frames_per_clip)])
+#                 depth_samples.append(
+#                     depth_list[clip_i:(clip_i + n_frames_per_clip)])    
+#                 labels.append(annot_df['label'].iloc[frame_i])
+#                 # data augmentation by reversing the sequence of the video
+#                 if reverse:
+#                     rgb_samples.append(
+#                         rgb_list[::-1][clip_i:(clip_i + n_frames_per_clip)])
+#                     depth_samples.append(
+#                         depth_list[::-1][clip_i:(clip_i + n_frames_per_clip)])
+#                     labels.append(annot_df['label'].iloc[frame_i])
+#                 clip_i += stride
+#     return rgb_samples, depth_samples, labels
 
 
 
-# load frame clip for one task each time
-class dataset_task(Dataset):
-    def __init__(self, root_path, mode, n_frames_per_clip, task, img_size, 
-                 stride=1, reverse=False, transform=None, mask_trans=None):
-        self.root_path = root_path
-        self.rgb_samples, self.depth_samples, self.labels = load_frame_task(root_path, mode, 
-                                                                            n_frames_per_clip,
-                                                                            task, 
-                                                                            stride, reverse)
-        self.w = img_size[0]
-        self.h = img_size[1]
-        self.sample_num = len(self.rgb_samples)
-        self.n_frames_per_clip = n_frames_per_clip
-        self.transform = transform
-        self.mask_transform = mask_trans
-        print('{} {} samples have been loaded'.format(task, self.sample_num))
+# # load frame clip for one task each time
+# class dataset_task(Dataset):
+#     def __init__(self, root_path, mode, n_frames_per_clip, task, img_size, 
+#                  stride=1, reverse=False, transform=None, mask_trans=None):
+#         self.root_path = root_path
+#         self.rgb_samples, self.depth_samples, self.labels = load_frame_task(root_path, mode, 
+#                                                                             n_frames_per_clip,
+#                                                                             task, 
+#                                                                             stride, reverse)
+#         self.w = img_size[0]
+#         self.h = img_size[1]
+#         self.sample_num = len(self.rgb_samples)
+#         self.n_frames_per_clip = n_frames_per_clip
+#         self.transform = transform
+#         self.mask_transform = mask_trans
+#         print('{} {} samples have been loaded'.format(task, self.sample_num))
 
-    def __getitem__(self, idx):
-        rgb_name = self.rgb_samples[idx]
-        depth_name = self.depth_samples[idx]
-        label = self.labels[idx]
-        rgb = torch.zeros([3, self.n_frames_per_clip, self.h, self.w])
-        masks = torch.empty([self.n_frames_per_clip, self.h, self.w], dtype=torch.long)
+#     def __getitem__(self, idx):
+#         rgb_name = self.rgb_samples[idx]
+#         depth_name = self.depth_samples[idx]
+#         label = self.labels[idx]
+#         rgb = torch.zeros([3, self.n_frames_per_clip, self.h, self.w])
+#         masks = torch.empty([self.n_frames_per_clip, self.h, self.w], dtype=torch.long)
 
-        for frame_name_i in range(len(rgb_name)):
-            rgb_cache = Image.open(rgb_name[frame_name_i]).convert("RGB").resize((self.w, self.h), Image.BILINEAR)  # C * W * H
-            rgb_cache = self.transform(rgb_cache)
-            rgb[:, frame_name_i, :, :] = rgb_cache
-            mask = Image.open(depth_name[frame_name_i]).convert("L").resize((self.w, self.h), Image.BILINEAR)  # C * W * H
-            threshold = 10
-            mask = mask.point(lambda p: p > threshold and 255)
-            mask = self.mask_transform(mask)
-            mask = torch.squeeze(mask)
-            masks[frame_name_i, :, :] = mask
-        if len(rgb_name) == 1: # for images
-            return torch.squeeze(rgb), mask, int(int(label) - 1)
-        else: # for videos
-            return rgb, masks, int(int(label) - 1)
-        # return rgb, masks, (torch.tensor(label)-1).long()
+#         for frame_name_i in range(len(rgb_name)):
+#             rgb_cache = Image.open(rgb_name[frame_name_i]).convert("RGB").resize((self.w, self.h), Image.BILINEAR)  # C * W * H
+#             rgb_cache = self.transform(rgb_cache)
+#             rgb[:, frame_name_i, :, :] = rgb_cache
+#             mask = Image.open(depth_name[frame_name_i]).convert("L").resize((self.w, self.h), Image.BILINEAR)  # C * W * H
+#             threshold = 10
+#             mask = mask.point(lambda p: p > threshold and 255)
+#             mask = self.mask_transform(mask)
+#             mask = torch.squeeze(mask)
+#             masks[frame_name_i, :, :] = mask
+#         if len(rgb_name) == 1: # for images
+#             return torch.squeeze(rgb), mask, int(int(label) - 1)
+#         else: # for videos
+#             return rgb, masks, int(int(label) - 1)
+#         # return rgb, masks, (torch.tensor(label)-1).long()
 
-    def __len__(self):
-        return int(self.sample_num)
+#     def __len__(self):
+#         return int(self.sample_num)
 
+# This script downsamples frames larger than 40 to 40 (follow the original paper)
 def DownSample(annot_df, sample_num):
     downsampled_annot_dict = {k: [] for k in ['rgb', 'depth', 'label']}
     for video_i in range(annot_df.shape[0]):
