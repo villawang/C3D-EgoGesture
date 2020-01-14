@@ -11,6 +11,12 @@ pillow==6.2.1 \
 matplotlib \
 opencv-python-headless \
 pandas \
-scikit-image \
+scikit-image
+## Usage 
+First use create_annotation.py to create annotation files. 
+
+## Pretrained model
+C3D: 
+R3D pretrained model is here ["here"](https://drive.google.com/drive/folders/1zvl89AgFAApbH0At-gMuZSeQB_LpNP-M)
 
 
